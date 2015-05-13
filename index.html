@@ -40,16 +40,28 @@
                    ele.connectedEdges().each(function(i,ele){
                        if(ele.target().data('name') === 'summator'){
                            ele.target().data({sum : ele.target().data('sum') + 1});
-                           console.log(ele.target().data('sum'));
+                           console.log(ele.target().data('sum') + ' for bits');
                        }
                    });
                    cy.elements('[name="summator"]').each(function(i,ele){
                        summatorArray.push(ele);
-                    }
-                    //while(summatorArray.length !== 0){
-                        
-                   //}
-               });
+                    });
+                    var i = 0;
+                    while(summatorArray.length !== i){
+                            
+                          for(var j = 0; j < summatorArray.length; j++){
+                              console.log(summatorArray[j].data('sum') + 'for sum summator');
+                            console.log(summatorArray[j].data('totalIncomers') + 'totalincomers summator');
+                               console.log(i + ' i sumator');
+                               if (summatorArray[j].data('sum') === summatorArray[j].data('totalIncomers')) {
+                                   summatorArray[j].target().data({sum: ele.target().data('sum') + 1});
+                                   console.log(summatorArray[j].data('sum') + ' for summator');
+                                   summatorArray[j].data({sum: 0});
+                                   i++;
+                               }
+                           }
+                       }
+                   });
                
            }
             function addSummator(){
@@ -57,7 +69,7 @@
                 exampleNode = JSON.parse(JSON.stringify({// node n1
             group: 'nodes',
             data: {
-                width: 90, heigth: 90,name: 'summator', value: '+', sum : 0},
+                width: 90, heigth: 90,name: 'summator', value: '+', sum : 0, totalIncomers : 0},
             position: {x: 10, y: 10}}));
             exampleNode.data.id = 'summator_' + summatorIDAutoIncrement++; 
             cy.add(JSON.parse(JSON.stringify(exampleNode)));
@@ -75,7 +87,7 @@
                    exampleNode = JSON.parse(JSON.stringify({// node n1
                        group: 'nodes',
                        data: {
-                           parent: 'nparent', width: 30, heigth: 80, shape: 'rectangle', name: 'bit', value: '1', old:'0',newval:'1'},
+                           parent: 'nparent', width: 30, heigth: 80, shape: 'rectangle', name: 'bit', value: '1', old:'0',newval:'1', totalIncomers : 0},
                        position: {x: -35, y: 0}}));
                    var registerName = $('#registerName').val();
                    var registerCount = parseInt($('#registerCount').val());
@@ -171,6 +183,7 @@
                                exampleEdge.data.id = 'edge_' + selectedNode.data('id') + '_' + node.data('id');
                                exampleEdge.data.source = selectedNode.data('id');
                                exampleEdge.data.target = node.data('id');
+                               node.data({totalIncomers : node.data('totalIncomers') + 1});
                                cy.add(JSON.parse(JSON.stringify(exampleEdge)));
                                node.css('background-color', '#888');
                                selectedNode.css('background-color', '#888');
