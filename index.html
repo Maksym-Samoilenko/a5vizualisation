@@ -12,188 +12,356 @@
             }
 
             #cy {
-                height: 1200px;
-                width: 2000px;
+                height: 400px;
+                width: 800px;
                 position: absolute;
-                left: 0;
-                top: 50;
+                left: 0px;
+                top: 125px;
+            }
+            #output {
+                height: 400px;
+                width: 800px;
+                position: absolute;
+                left: 0px;
+                top: 525px;
             }
         </style>
     </head>
     <body>
-        <button id="addRegister" onclick="addRegister()">addRegister</button>
-        <input type="text" id="registerName" name="registerName" value="" size="20" />
-        <input type="text" id="registerCount" name="registerCount" value="" size="10" />
-        <br>
         
+        Register's name:<input type="text" id="registerName" name="registerName" value="" size="20" />
+        Count of bits:<input type="text" id="registerCount" name="registerCount" value="" size="10" />
+        <br>
+        <button id="addRegister" onclick="addRegister()">addRegister</button><br>
+        Input IN text
+        <input type="text" id="in" name="IN" value="" size="50" />
+        <br>
+        Cypher text
+        <input type="text" id="out" name="OUT" value="" size="50" />
+        <br>
+
         <button id="addSummator" onclick="addSummator()">addSummator</button>
         <br>
-        <button id="firstTurn" onclick="firstTurn()">firstTurn</button>
+        <button id="firstTurn" onclick="firstTurn()">nextTurn</button>
         <br>
+
         <div id="cy"></div>
+        <div id="output"></div>
         <script id="jsbin-javascript">
-           var summatorIDAutoIncrement = 0;
-           function firstTurn(){
-               var summatorArray = new Array();
-               console.log('first turn');
-               cy.elements('[name="bit"]').each(function(i,ele){
-                   ele.connectedEdges().each(function(i,ele){
-                       if(ele.target().data('name') === 'summator'){
-                           ele.target().data({sum : ele.target().data('sum') + 1});
-                           console.log(ele.target().data('sum') + ' for bits');
-                       }
-                   });
-                   cy.elements('[name="summator"]').each(function(i,ele){
-                       summatorArray.push(ele);
+            var summatorIDAutoIncrement = 0;
+
+            function firstTurn() {
+                var str = $('#in').val();
+                cy.elements('[id="IN"]').each(function(i, ele){
+                    
+                    ele.data({value: str[0]});
+                    
+                });
+                $('#in').val(str.substr(1,str.length));
+                cy.elements('[name="bit"]').each(function (i, ele) {
+                    ele.outgoers().each(function (i, ele) {
+                        if (ele.target() !== undefined && ele.target().data('name') === 'summator') {
+                            ele.target().data({sum: ((parseInt(ele.target().data('sum')) + parseInt(ele.source().data('newval'))))});
+
+                        }
                     });
-                    var i = 0;
-                    while(summatorArray.length !== i){
+                });
+                cy.elements('[name="bit"]').each(function (i, ele) {
+                    ele.data({old: ele.data('newval')});
+                });
+                var k = 0;
+                while (k < 10) {
+                    cy.elements('[name="summator"]').each(function (i, ele) {
+
+                        if (ele.data('sum') !== -1) {
+
+
+
+                            ele.outgoers().each(function (i, ele) {
+                                if (ele.target() !== undefined && ele.target().data('name') === 'summator') {
+                                    ele.target().data({sum: (parseInt(ele.target().data('sum')) + parseInt(ele.source().data('sum')))});
+                                    
+                                }
+                                if (ele.target() !== undefined && ele.target().data('name') === 'bit' && ele.source().data()) {
+                                    ele.target().data({newval: ((parseInt((ele.target().data('old')) + parseInt(ele.source().data('sum')))) % 2)});
+                                    console.log('for out is' + ele.target().data('id'));
+                                }
+                            });
+
+                            if (ele.data('sum') === ele.data('totalIncomers')) {
+                                ele.data({sum: -1});
+
+                            }
+                        }
+                    });
+                    k++;
+                }
+                var clocker = 0;
+                var clockersamount = 0;
+                cy.elements('[isClocking="true"][name="bit"]').each(function(i, ele){
+                                        console.log('clap');
+                     clockersamount++;                   
+                    clocker += parseInt(ele.data('old'));
+                });
+                
+                
+                if(clocker <= clockersamount / 2){
+                    clocker = 0;
+                }
+                else{
+                    clocker = 1;
+                }
+                cy.elements('[isClocking="true"][name="bit"]').each(function(i, ele){
+                    console.log('clock');
+                    if(parseInt(ele.data('old')) === clocker){
+                        ele.parent().data({isClocking : 'false'});
+                    }
+                    else{
+                        ele.parent().data({isClocking : 'true'});
+                    }
+                });
+                
+                cy.elements('[name="bit"]').each(function (i, ele) {
+                    if(ele.parent().data('isClocking') === 'false'){
+                    ele.outgoers().each(function (i, ele) {
+                        if (ele.target() !== undefined && ele.target().data('name') === 'bit') {
+                        
+                            ele.target().data({newval: ((parseInt(ele.source().data('old')) + parseInt(ele.target().data('old'))) % 2)});
                             
-                          for(var j = 0; j < summatorArray.length; j++){
-                              console.log(summatorArray[j].data('sum') + 'for sum summator');
-                            console.log(summatorArray[j].data('totalIncomers') + 'totalincomers summator');
-                               console.log(i + ' i sumator');
-                               if (summatorArray[j].data('sum') === summatorArray[j].data('totalIncomers')) {
-                                   summatorArray[j].target().data({sum: ele.target().data('sum') + 1});
-                                   console.log(summatorArray[j].data('sum') + ' for summator');
-                                   summatorArray[j].data({sum: 0});
-                                   i++;
-                               }
-                           }
-                       }
-                   });
-               
-           }
-            function addSummator(){
-                console.log('add summator');
-                exampleNode = JSON.parse(JSON.stringify({// node n1
-            group: 'nodes',
-            data: {
-                width: 90, heigth: 90,name: 'summator', value: '+', sum : 0, totalIncomers : 0},
-            position: {x: 10, y: 10}}));
-            exampleNode.data.id = 'summator_' + summatorIDAutoIncrement++; 
-            cy.add(JSON.parse(JSON.stringify(exampleNode)));
+                        }
+                    });
+                }
+                });
+                cy.elements('[name="bit"]').each(function (i, ele) {
+
+                    ele.data({value: ele.data('newval') + '/' + ele.data('old')});
+                });
+                cy.elements('[name="summator"]').each(function (i, ele) {
+                    ele.data({sum: 0});
+                });
+                cy.initrender();
+                 cy.elements('[name="register"]').each(function (i, ele) {
+                    
+                    ele.children().each(function(i,ele){
+                        $('#output').html($('#output').html() + (ele.data('id')));
+                        $('#output').html($('#output').html() +' '+ (ele.data('newval')));
+                        
+                        
+                    });
+                    });
+                   $('#output').html($('#output').html() +'NEXT TURN' +'<br>');
+                   cy.elements('[id="OUT_-1"]').each(function(i, ele){
+
+                    $('#out').val(ele.data('newval') + $('#out').val());
+                }); 
+                
+                
             }
-    function addRegister() {
-        console.log('add register');
-        parentExampleNode = JSON.parse(JSON.stringify({group: 'nodes',
-            data: {id: 'nparent', width: 35 * (parseInt($('#registerCount').val()) + 1), heigth: 80, shape: 'rectangle', name: 'register', value: '2'},
-            position: {x: 0, y: 0}}));
-        exampleEdge = JSON.parse(JSON.stringify({// node n1
-            group: 'edges',
-                       data: {
-                           id: 'edge1', source: "n0", target: "n1"}
-                   }));
-                   exampleNode = JSON.parse(JSON.stringify({// node n1
-                       group: 'nodes',
-                       data: {
-                           parent: 'nparent', width: 30, heigth: 80, shape: 'rectangle', name: 'bit', value: '1', old:'0',newval:'1', totalIncomers : 0},
-                       position: {x: -35, y: 0}}));
-                   var registerName = $('#registerName').val();
-                   var registerCount = parseInt($('#registerCount').val());
-                   parentExampleNode.data.id = registerName;
-                   parentExampleNode.data.value = registerName;
-                   console.log(registerName);
-                   console.log(registerCount);
-                   cy.add(JSON.parse(JSON.stringify(parentExampleNode)));
-                   for (var i = -1; i < registerCount - 1; i++) {
-                       exampleNode.data.parent = registerName;
-                       exampleNode.data.id = registerName + '_' + i;
-                       exampleNode.data.value = exampleNode.data.old + '/' + exampleNode.data.newval;
-                       exampleNode.position.x = i * 35;
-                       console.log('adding');
-                       cy.add(JSON.parse(JSON.stringify(exampleNode)));
-                       if (i >= 0) {
-                           exampleEdge.data.id = 'edge_' + registerName + '_' + i;
-                           exampleEdge.data.source = registerName + '_' + (i - 1);
-                           exampleEdge.data.target = registerName + '_' + i;
-                           cy.add(JSON.parse(JSON.stringify(exampleEdge)));
-                       }
-                   }
-               }
-               $('#cy').cytoscape({
-                   layout: {
-                       name: 'preset'
-                   },
-                   style: [
-                       {
-                           selector: '[name="bit"]',
-                           css: {
-                               'content': 'data(value)',
-                               'shape': 'data(shape)',
-                               'width': 'data(width)',
-                               'heigth': 'data(heigth)',
-                               'text-valign': 'center',
-                               'text-halign': 'center',
-                           }
-                       },
-                       {
-                           selector: '[name="register"]',
-                           css: {
-                               'text-valign': 'top',
-                               'text-halign': 'center',
-                           }
-                       },
-                       {
-                           selector: '[name="summator"]',
-                           css: {
-                               'text-valign': 'center',
-                               'text-halign': 'center',
-                               'content': 'data(value)',
-                               'width': 'data(width)',
-                               'heigth': 'data(heigth)'
+            function addSummator() {
 
-                           }
-                       },
-                       {
-                           selector: 'edge',
-                           css: {
-                               'width': 2,
-                               'target-arrow-shape': 'triangle',
-                               'line-color': '#ffaaaa',
-                               'target-arrow-color': '#ffaaaa'
-                           }
-                       }
-                   ],
-                   ready: function () {
-                       window.cy = this;
-                       var selectedNode = null;
-                       cy.on('tapdragover', '[name="bit"]', function (e) {
-                           cy.$('[name="bit"]').ungrabify();
-                       });
-                       cy.on('tapdragout', '[name="bit"]', function (e) {
-                           cy.$('[name="bit"]').grabify();
-                       });
-                       cy.on('tap', '[name="bit"],[name="summator"]', function (e) {
-                           var node = e.cyTarget;
-                           if (selectedNode === null) {
-                               selectedNode = node;
-                               node.css('background-color', '#ff0000');
-                           }
-                           else {
+                exampleNode = JSON.parse(JSON.stringify({// node n1
+                    group: 'nodes',
+                    data: {
+                        width: 90, heigth: 90, name: 'summator', value: '+', sum: 0, totalIncomers: 0},
+                    position: {x: 10, y: 10}}));
+                exampleNode.data.id = 'summator_' + summatorIDAutoIncrement++;
+                cy.add(JSON.parse(JSON.stringify(exampleNode)));
+            }
+            function addRegister() {
+
+                parentExampleNode = JSON.parse(JSON.stringify({group: 'nodes',
+                    data: {id: 'nparent', width: 35 * (parseInt($('#registerCount').val()) + 1), heigth: 80, shape: 'rectangle', name: 'register', value: '2',isClocking: 'false'},
+                    position: {x: 0, y: 0}}));
+                exampleEdge = JSON.parse(JSON.stringify({// node n1
+                    group: 'edges',
+                    data: {
+                        id: 'edge1', source: "n0", target: "n1"}
+                }));
+                exampleNode = JSON.parse(JSON.stringify({// node n1
+                    group: 'nodes',
+                    data: {
+                        parent: 'nparent', width: 30, heigth: 80, shape: 'rectangle', name: 'bit', value: '1', old: '0', newval: '1', totalIncomers: 0,isClocking: 'false'},
+                    position: {x: -35, y: 0}}));
+                var registerName = $('#registerName').val();
+                var registerCount = parseInt($('#registerCount').val());
+                parentExampleNode.data.id = registerName;
+                parentExampleNode.data.value = registerName;
+
+                cy.add(JSON.parse(JSON.stringify(parentExampleNode)));
+                for (var i = -1; i < registerCount - 1; i++) {
+                    exampleNode.data.parent = registerName;
+                    exampleNode.data.id = registerName + '_' + i;
+                    exampleNode.data.value = exampleNode.data.newval + '/' + exampleNode.data.old;
+                    exampleNode.position.x = (i * 35);
+
+                    cy.add(JSON.parse(JSON.stringify(exampleNode)));
+                    if (i >= 0) {
+                        exampleEdge.data.id = 'edge_' + registerName + '_' + i;
+                        exampleEdge.data.source = registerName + '_' + (i - 1);
+                        exampleEdge.data.target = registerName + '_' + i;
+                        cy.add(JSON.parse(JSON.stringify(exampleEdge)));
+                    }
+                }
+            }
+            function addOutRegister() {
+
+                parentExampleNode = JSON.parse(JSON.stringify({group: 'nodes',
+                    data: {id: 'nparent', width: 35 * (parseInt($('#registerCount').val()) + 1), heigth: 80, shape: 'rectangle', name: 'register', value: '2',isClocking: 'false'},
+                    position: {x: 0, y: 0}}));
+                exampleEdge = JSON.parse(JSON.stringify({// node n1
+                    group: 'edges',
+                    data: {
+                        id: 'edge1', source: "n0", target: "n1"}
+                }));
+                exampleNode = JSON.parse(JSON.stringify({// node n1
+                    group: 'nodes',
+                    data: {
+                        parent: 'nparent', width: 30, heigth: 80, shape: 'rectangle', name: 'bit', value: '1', old: '0', newval: '0', totalIncomers: 0,isClocking: 'false'},
+                    position: {x: -35, y: 0}}));
+                var registerName = 'OUT';
+                var registerCount = 1;
+                parentExampleNode.data.id = registerName;
+                parentExampleNode.data.value = registerName;
+
+                cy.add(JSON.parse(JSON.stringify(parentExampleNode)));
+                for (var i = -1; i < registerCount - 1; i++) {
+                    exampleNode.data.parent = registerName;
+                    exampleNode.data.id = registerName + '_' + i;
+                    exampleNode.data.value = exampleNode.data.newval + '/' + exampleNode.data.old;
+                    exampleNode.position.x = (i * 35);
+                    cy.add(JSON.parse(JSON.stringify(exampleNode)));
+                    
+                }
+            }
+            function addInRegister() {
+
+                parentExampleNode = JSON.parse(JSON.stringify({group: 'nodes',
+                    data: {id: 'nparent', width: 35 * (parseInt($('#registerCount').val()) + 1), heigth: 80, shape: 'rectangle', name: 'register', value: '2',isClocking: 'false'},
+                    position: {x: 0, y: 0}}));
+                exampleEdge = JSON.parse(JSON.stringify({// node n1
+                    group: 'edges',
+                    data: {
+                        id: 'edge1', source: "n0", target: "n1"}
+                }));
+                exampleNode = JSON.parse(JSON.stringify({// node n1
+                    group: 'nodes',
+                    data: {
+                        parent: 'nparent', width: 30, heigth: 80, shape: 'rectangle', name: 'bit', value: '1', old: '0', newval: '0', totalIncomers: 0,isClocking: 'false'},
+                    position: {x: -35, y: 0}}));
+                var registerName = 'IN';
+                var registerCount = 1;
+                parentExampleNode.data.id = registerName;
+                parentExampleNode.data.value = registerName;
+
+                cy.add(JSON.parse(JSON.stringify(parentExampleNode)));
+                for (var i = -1; i < registerCount - 1; i++) {
+                    exampleNode.data.parent = registerName;
+                    exampleNode.data.id = registerName + '_' + i;
+                    exampleNode.data.value = exampleNode.data.newval + '/' + exampleNode.data.old;
+                    exampleNode.position.x = (i * 35);
+                    cy.add(JSON.parse(JSON.stringify(exampleNode)));
+                    
+                }
+            }
+            $('#cy').cytoscape({
+                layout: {
+                    name: 'preset'
+                },
+                style: [
+                    {
+                        selector: '[name="bit"]',
+                        css: {
+                            'content': 'data(value)',
+                            'shape': 'data(shape)',
+                            'width': 'data(width)',
+                            'heigth': 'data(heigth)',
+                            'text-valign': 'center',
+                            'text-halign': 'center',
+                        }
+                    },
+                    {
+                        selector: '[name="register"]',
+                        css: {
+                            'content': 'data(id)',
+                            'text-valign': 'top',
+                            'text-halign': 'top'
+                        }
+                    },
+                    {
+                        selector: '[name="summator"]',
+                        css: {
+                            'text-valign': 'center',
+                            'text-halign': 'center',
+                            'content': 'data(value)',
+                            'width': 'data(width)',
+                            'heigth': 'data(heigth)'
+
+                        }
+                    },
+                    {
+                        selector: 'edge',
+                        css: {
+                            'width': 2,
+                            'target-arrow-shape': 'triangle',
+                            'line-color': '#ffaaaa',
+                            'target-arrow-color': '#ffaaaa'
+                        }
+                    }
+                ],
+                ready: function () {
+                    window.cy = this;
+                    
+                    var selectedNode = null;
+                    cy.on('tapdragover', '[name="bit"]', function (e) {
+                        cy.$('[name="bit"]').ungrabify();
+                    });
+                    cy.on('tapdragout', '[name="bit"]', function (e) {
+                        cy.$('[name="bit"]').grabify();
+                    });
+                    cy.on('tap', '[name="bit"],[name="summator"]', function (e) {
+                        var node = e.cyTarget;
+                        if (selectedNode === null) {
+                            selectedNode = node;
+                            node.css('background-color', '#ff0000');
+                        }
+                        else {
 
 
-                               exampleEdge = JSON.parse(JSON.stringify({// node n1
-                                   group: 'edges',
-                                   data: {
-                                       id: 'edge1', source: "n0", target: "n1"}
-                               }));
-                               console.log(selectedNode.data('id'));
+                            exampleEdge = JSON.parse(JSON.stringify({// node n1
+                                group: 'edges',
+                                data: {
+                                    id: 'edge1', source: "n0", target: "n1"}
+                            }));
+                           // console.log(selectedNode.data('id'));
 
-                               exampleEdge.data.id = 'edge_' + selectedNode.data('id') + '_' + node.data('id');
-                               exampleEdge.data.source = selectedNode.data('id');
-                               exampleEdge.data.target = node.data('id');
-                               node.data({totalIncomers : node.data('totalIncomers') + 1});
-                               cy.add(JSON.parse(JSON.stringify(exampleEdge)));
-                               node.css('background-color', '#888');
-                               selectedNode.css('background-color', '#888');
-                               selectedNode = null;
-                           }
-                       });
+                            exampleEdge.data.id = 'edge_' + selectedNode.data('id') + '_' + node.data('id');
+                            exampleEdge.data.source = selectedNode.data('id');
+                            exampleEdge.data.target = node.data('id');
+                            node.data({totalIncomers: node.data('totalIncomers') + 1});
+                            cy.add(JSON.parse(JSON.stringify(exampleEdge)));
+                            node.css('background-color', '#888');
+                            selectedNode.css('background-color', '#888');
+                            selectedNode = null;
+                        }
+                    });
+                    cy.on('cxttapstart', '[name="bit"]', function (e) {
+                        
+                        var node = e.cyTarget;
+                        if (node.data('isClocking') === 'true') {
+                            node.css('background-color', '#888');
+                            node.data({isClocking : 'false'});
+                        }
+                        else {
+                            
+                            node.css('background-color', '#00ff00');
+                            node.data({isClocking : 'true'});
+                        }
+                    });
+                    addInRegister();
+                    addOutRegister();
 
-
-                   }
-               });
+                }
+            });
 
         </script>
     </body>
